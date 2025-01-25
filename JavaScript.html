@@ -1,30 +1,30 @@
 <script>
-  window.addEventListener("load", functionInit, true); 
+  window.addEventListener("load", functionInit, true);
 
   //Initialize functions onload
-  function functionInit(){
+  function functionInit() {
     preventFormSubmit();
-  };
+  }
 
   // Prevent forms default behaviour (Prevent reloading the page)
   function preventFormSubmit() {
-    var forms = document.querySelectorAll('form');
+    var forms = document.querySelectorAll("form");
     for (var i = 0; i < forms.length; i++) {
-      forms[i].addEventListener('submit', function(event) {
-      event.preventDefault();
+      forms[i].addEventListener("submit", function (event) {
+        event.preventDefault();
       });
     }
-  } 
+  }
 
   /**
-   * The handleFormSubmit() function passes the formObject to the processForm 
+   * The handleFormSubmit() function passes the formObject to the processForm
    * function in the Code.gs file
    */
   function handleFormSubmit(formObject) {
     // Get the QR data from the div
     google.script.run.processForm(formObject);
-    const resultContainer = document.getElementById('qr-reader-results');
-    resultContainer.innerHTML = '';
+    const resultContainer = document.getElementById("qr-reader-results");
+    resultContainer.innerHTML = "";
     document.getElementById("InventoryForm").reset();
   }
 </script>
