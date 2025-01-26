@@ -17,6 +17,7 @@
       </list>
     </option>
   </component>
+  <component name="ExternalStorageConfigurationManager" enabled="true" />
   <component name="MarkdownProjectSettings">
     <PreviewSettings splitEditorLayout="SPLIT" splitEditorPreview="PREVIEW" useGrayscaleRendering="false" zoomFactor="1.0" maxImageWidth="0" showGitHubPageIfSynced="false" allowBrowsingInPreview="false" synchronizePreviewPosition="true" highlightPreviewType="LINE" highlightFadeOut="5" highlightOnTyping="true" synchronizeSourcePosition="true">
       <PanelProvider>
@@ -83,5 +84,10 @@
       <textMaps />
     </LinkMapSettings>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" />
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_21" default="true" project-jdk-name="jbr-21" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/build/classes" />
+  </component>
+  <component name="ProjectType">
+    <option name="id" value="Android" />
+  </component>
 </project>

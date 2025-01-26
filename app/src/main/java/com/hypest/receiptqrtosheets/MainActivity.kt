@@ -1,16 +1,23 @@
 package com.hypest.receiptqrtosheets
 
+import android.content.Context
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import com.google.mlkit.vision.barcode.common.Barcode
+import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
+import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 import com.hypest.receiptqrtosheets.ui.theme.ReceiptQRToSheetsTheme
 
 class MainActivity : ComponentActivity() {
@@ -19,7 +26,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ReceiptQRToSheetsTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    floatingActionButton = { LaunchScanner() }) { innerPadding ->
                     Greeting(
                         name = "Android",
                         modifier = Modifier.padding(innerPadding)
@@ -27,6 +36,32 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+}
+
+fun scan(context: Context) {
+    val options = GmsBarcodeScannerOptions.Builder()
+        .setBarcodeFormats(
+            Barcode.FORMAT_QR_CODE
+        )
+        .enableAutoZoom()
+        .build()
+
+    val scanner = GmsBarcodeScanning.getClient(context, options)
+    scanner.startScan()
+        .addOnSuccessListener { barcode ->
+            Toast.makeText(context, barcode.rawValue, Toast.LENGTH_SHORT).show()
+        }
+}
+
+@Composable
+fun LaunchScanner() {
+    val context = LocalContext.current
+
+    FloatingActionButton(onClick = {
+        scan(context)
+    }) {
+        Text(text = "Scan")
     }
 }
 
