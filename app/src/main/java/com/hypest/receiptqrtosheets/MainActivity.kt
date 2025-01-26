@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
@@ -58,9 +59,12 @@ fun scan(context: Context) {
 fun LaunchScanner() {
     val context = LocalContext.current
 
-    FloatingActionButton(onClick = {
-        scan(context)
-    }) {
+    FloatingActionButton(
+        onClick = {
+            scan(context)
+        },
+        Modifier.testTag("fab")
+    ) {
         Text(text = "Scan")
     }
 }
