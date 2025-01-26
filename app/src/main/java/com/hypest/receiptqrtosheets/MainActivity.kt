@@ -29,7 +29,7 @@ class MainActivity : ComponentActivity() {
             ReceiptQRToSheetsTheme {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
-                    floatingActionButton = { LaunchScanner() }) { innerPadding ->
+                    floatingActionButton = { FAB() }) { innerPadding ->
                     Greeting(
                         name = "Android",
                         modifier = Modifier.padding(innerPadding)
@@ -56,7 +56,7 @@ fun scan(context: Context) {
 }
 
 @Composable
-fun LaunchScanner() {
+fun FAB() {
     val context = LocalContext.current
 
     FloatingActionButton(
