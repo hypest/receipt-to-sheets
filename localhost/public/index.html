@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>QR Code Scanner</title>
+    <style>
+        #video-container {
+            width: 640px;
+            height: 480px;
+            position: relative;
+        }
+        #video {
+            width: 100%;
+            height: 100%;
+        }
+        #result-container {
+            margin-top: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>QR Code Scanner</h1>
+    <div id="camera-select-container" style="margin-bottom: 20px;">
+        <label for="camera-select">Select Camera: </label>
+        <select id="camera-select"></select>
+    </div>
+    <div style="display: flex; gap: 20px;">
+        <div>
+            <h2>Camera Scanner</h2>
+            <div id="video-container">
+                <video id="video"></video>
+            </div>
+        </div>
+        <div>
+            <h2>File Upload</h2>
+            <input type="file" id="file-input" accept="image/*" style="margin-bottom: 10px;">
+            <div id="image-preview" style="width: 640px; height: 480px; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center;">
+                <img id="preview" style="max-width: 100%; max-height: 100%; display: none;">
+            </div>
+        </div>
+    </div>
+    <div id="result-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+    <script>
+        const video = document.getElementById('video');
+        const resultContainer = document.getElementById('result-container');
+        const cameraSelect = document.getElementById('camera-select');
+        const cameraSelectContainer = document.getElementById('camera-select-container');
+        let scanning = true;
+        let currentStream = null;
+
+        // Initialize camera handling
+        async function initializeCamera() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+                cameraSelect.innerHTML = '';
+                videoDevices.forEach((device, index) => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    option.text = device.label || `Camera ${index + 1}`;
+                    cameraSelect.appendChild(option);
+                });
+
+                cameraSelect.addEventListener('change', () => {
+                    startCamera(cameraSelect.value);
+                });
+
+                // Start with the first camera
+                await startCamera(videoDevices[0]?.deviceId);
+            } catch (error) {
+                console.error('Error initializing camera:', error);
+                resultContainer.innerHTML = `Error accessing camera: ${error.message}`;
+            }
+        }
+
+        async function startCamera(deviceId = null) {
+            try {
+                if (currentStream) {
+                    currentStream.getTracks().forEach(track => track.stop());
+                }
+
+                const constraints = {
+                    video: deviceId 
+                        ? { deviceId: { exact: deviceId } }
+                        : { facingMode: "environment" }
+                };
+
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                currentStream = stream;
+                video.srcObject = stream;
+                video.setAttribute("playsinline", true);
+                video.play();
+                scanning = true;
+                requestAnimationFrame(tick);
+            } catch (error) {
+                console.error('Error starting camera:', error);
+                resultContainer.innerHTML = `Error starting camera: ${error.message}`;
+            }
+        }
+
+        // Initialize the camera setup
+        initializeCamera();
+
+        function tick() {
+            if (video.readyState === video.HAVE_ENOUGH_DATA && scanning) {
+                const canvas = document.createElement("canvas");
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+                
+                if (code) {
+                    scanning = false;
+                    processQRCode(code.data);
+                }
+            }
+            if (scanning) {
+                requestAnimationFrame(tick);
+            }
+        }
+
+        async function processQRCode(url) {
+            try {
+                const response = await fetch('/process-url', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url })
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayTable(result.data);
+                } else {
+                    resultContainer.innerHTML = `Error: ${result.error}`;
+                }
+            } catch (error) {
+                resultContainer.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        function displayTable(data) {
+            if (!data || data.length === 0) {
+                resultContainer.innerHTML = 'No data found';
+                return;
+            }
+
+            const table = document.createElement('table');
+            
+            // Create header row using keys from first object
+            const headerRow = document.createElement('tr');
+            const headers = Object.keys(data[0]);
+            headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                headerRow.appendChild(th);
+            });
+            table.appendChild(headerRow);
+            
+            // Create data rows
+            data.forEach(rowData => {
+                const tr = document.createElement('tr');
+                headers.forEach(header => {
+                    const td = document.createElement('td');
+                    td.textContent = rowData[header] || '';
+                    tr.appendChild(td);
+                });
+                table.appendChild(tr);
+            });
+            
+            resultContainer.innerHTML = '';
+            resultContainer.appendChild(table);
+        }
+
+        // Add file input handling
+        const fileInput = document.getElementById('file-input');
+        const preview = document.getElementById('preview');
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    preview.src = event.target.result;
+                    preview.style.display = 'block';
+                    preview.onload = function() {
+                        scanImage(preview);
+                    };
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function scanImage(image) {
+            const canvas = document.createElement('canvas');
+            canvas.width = image.naturalWidth;
+            canvas.height = image.naturalHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+            if (code) {
+                processQRCode(code.data);
+            } else {
+                resultContainer.innerHTML = 'No QR code found in the image';
+            }
+        }
+    </script>
+</body>
+</html> 
